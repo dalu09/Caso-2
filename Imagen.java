@@ -1,7 +1,6 @@
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
 public class Imagen {
     private byte[] header = new byte[54]; 
     private byte[][][] imagen;
@@ -115,4 +114,5 @@ public class Imagen {
             e.printStackTrace();
         }
     }
+
 }

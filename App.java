@@ -5,22 +5,26 @@ public class App {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Ingrese el número de marcos de página: ");
-        int numMarcos = scanner.nextInt();
-
-        PageTable pageTable = new PageTable(numMarcos); 
+        
         FaultsCounter faultsCounter = new FaultsCounter();
         Imagen imagenModificada = null;
 
         while (true) {
             System.out.println("Menú:");
+            System.out.println("0. Salir");
             System.out.println("1. Generar referencias");
             System.out.println("2. Calcular hits y fallas de página");
-            System.out.println("3. Salir");
+            System.out.println("3. Esconder mensaje en una imagen");
+            System.out.println("4. Recuperar mensaje de una imagen");
             System.out.print("Seleccione una opción: ");
             int opcion = scanner.nextInt();
 
             switch (opcion) {
+                case 0:
+                    System.out.println("Saliendo del programa.");
+                    scanner.close();
+                    System.exit(0);
+                    break;
                 case 1:
                     System.out.print("Ingrese el tamaño de página: ");
                     int tamanoPagina = scanner.nextInt();
@@ -32,19 +36,38 @@ public class App {
                     break;
 
                 case 2:
+                    System.out.print("Ingrese el número de marcos de página: ");
+                    int numMarcos = scanner.nextInt();
                     System.out.print("Ingrese el nombre del archivo de referencias: ");
                     String archivoReferencias = scanner.next();
                     simularPaginacion(archivoReferencias, numMarcos);
                     break;
 
                 case 3:
-                    System.out.println("Saliendo del programa.");
-                    scanner.close();
-                    System.exit(0);
+                    System.out.print("Ingrese el nombre de la imagen: ");
+                    String archivoImg = scanner.next();
+                    imagenModificada = new Imagen(archivoImg);
+
+                    System.out.print("Ingrese el nombre del archivo de texto con el mensaje: ");
+                    String archivoMensaje = scanner.next();
+
+                    char[] mensaje = leerArchivoTexto(archivoMensaje);
+                    imagenModificada.esconderMensaje(mensaje, mensaje.length);
+                    imagenModificada.escribirImagen(archivoImg + "_modificado");
+
+                    System.out.println("Mensaje escondido");
                     break;
 
-                default:
-                    System.out.println("Opción no válida. Intente de nuevo.");
+                case 4:
+                    System.out.print("Ingrese el nombre del archivo BMP con el mensaje escondido: ");
+                    String archivo = scanner.next();
+                    imagenModificada = new Imagen(archivo);
+
+                    char[] mensajeOculto = imagenModificada.recuperarMensaje();
+                    escribirArchivoTexto("Mensaje_oculto_" + archivo, mensajeOculto);
+
+                    System.out.println("Mensaje_oculto_" + archivo + " se creó con exito");
+                    break;
             }
         }
     }
@@ -130,5 +153,31 @@ public class App {
         }
     }
     
+    //Metodo para leer el archivo de texto
+    public static char[] leerArchivoTexto(String rutaArchivo) {
+        StringBuilder mensaje = new StringBuilder();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(rutaArchivo));
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                mensaje.append(linea);
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return mensaje.toString().toCharArray(); // Convertir a arreglo de char[]
+    }
     
+    // Método para escribir el mensaje en un archivo de texto
+    public static void escribirArchivoTexto(String rutaArchivo, char[] mensaje) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(rutaArchivo));
+            writer.write(mensaje);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
