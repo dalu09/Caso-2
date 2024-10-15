@@ -4,9 +4,6 @@ import java.util.Scanner;
 public class App {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
-        
-        FaultsCounter faultsCounter = new FaultsCounter();
         Imagen imagenModificada = null;
 
         while (true) {
@@ -32,7 +29,7 @@ public class App {
                     String archivoImagen = scanner.next();
                     imagenModificada = new Imagen(archivoImagen);
 
-                    generarReferencias(imagenModificada, tamanoPagina);
+                    recuperarMensajeReferencias(imagenModificada, tamanoPagina);
                     break;
 
                 case 2:
@@ -81,15 +78,9 @@ public class App {
             int tamanoMensaje = imagen.leerLongitud();
     
             // Calcular número de páginas necesarias
-            int totalBytes = filas * columnas * 3 + tamanoMensaje;
-            int paginasVirtuales = (int) Math.ceil((double) totalBytes / tamanoPagina);
+            int ref = 0;
+            int paginasVirtuales = (((filas*columnas*3)+tamanoMensaje)/tamanoPagina);
     
-            // Escribir cabecera del archivo de referencias
-            writer.write("TP=" + tamanoPagina + "\n");
-            writer.write("NF=" + filas + "\n");
-            writer.write("NC=" + columnas + "\n");
-            writer.write("NR=" + totalBytes + "\n");
-            writer.write("NP=" + paginasVirtuales + "\n");
     
             // Escribir referencias generadas
             for (int i = 0; i < filas; i++) {
@@ -104,7 +95,13 @@ public class App {
             for (int k = 0; k < tamanoMensaje; k++) {
                 writer.write("Mensaje[" + k + "]," + ((filas * columnas * 3) + k) / tamanoPagina + "," + ((filas * columnas * 3) + k) % tamanoPagina + ",W\n");
             }
-    
+
+            writer.write("TP=" + tamanoPagina + "\n");
+            writer.write("NF=" + filas + "\n");
+            writer.write("NC=" + columnas + "\n");
+            writer.write("NR=" + ref + "\n");
+            writer.write("NP=" + paginasVirtuales + "\n");
+
             writer.close();
             System.out.println("Referencias generadas y guardadas en 'referencias.txt'.");
         } catch (IOException e) {
@@ -180,4 +177,47 @@ public class App {
         }
     }
 
+    public static void recuperarMensajeReferencias(Imagen imagen, int tamanoPagina) {
+        try {
+            FileWriter writer = new FileWriter("referencias.txt");
+            int filas = imagen.getAlto();
+            int columnas = imagen.getAncho();
+            int tamanoImagen = filas * columnas * 3;
+            int tamanoMensaje = imagen.leerLongitud();
+            
+            // Calcular número de páginas necesarias
+            int ref = 0;
+            int paginasVirtuales = (((filas*columnas*3)+tamanoMensaje)/tamanoPagina);
+
+            writer.write("TP=" + tamanoPagina + "\n");
+            writer.write("NF=" + filas + "\n");
+            writer.write("NC=" + columnas + "\n");
+            writer.write("NR=" + ref + "\n");
+            writer.write("NP=" + paginasVirtuales + "\n");
+
+            writer.close();
+            System.out.println("Referencias generadas y guardadas en 'referencias.txt'.");
+            int longitud = leerLongitud(); 
+            char[] mensaje = new char[longitud];
+
+            int bytesFila = imagen.getAncho() * 3;
+            for (int posCaracter = 0; posCaracter < longitud; posCaracter++) {
+                //mensaje[posCaracter] = 0;
+                writer.write("Mensaje[" + str(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"W");
+                for (int i = 0; i < 8; i++) {
+                    int numBytes = 16 + (posCaracter * 8) + i;
+                    int fila = numBytes / bytesFila;
+                    int col = (numBytes % bytesFila) / 3;
+                    int color = (numBytes % bytesFila) % 3;
+                    //mensaje[posCaracter] |= (char) ((imagen[fila][col][color] & 1) << i);
+                    writer.write("Imagen[" + str(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"R");
+                    writer.write("Mensaje[" + str(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"W");
+                    }
+                }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
+
+
