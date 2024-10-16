@@ -195,29 +195,36 @@ public class App {
             writer.write("NR=" + ref + "\n");
             writer.write("NP=" + paginasVirtuales + "\n");
 
-            writer.close();
+            
             System.out.println("Referencias generadas y guardadas en 'referencias.txt'.");
-            int longitud = leerLongitud(); 
+            int longitud = imagen.leerLongitud(); 
             char[] mensaje = new char[longitud];
 
             int bytesFila = imagen.getAncho() * 3;
             for (int posCaracter = 0; posCaracter < longitud; posCaracter++) {
                 //mensaje[posCaracter] = 0;
-                writer.write("Mensaje[" + str(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"W");
+                writer.write("Mensaje[" + String.valueOf(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"W"+ "\n");
+                ref++;
                 for (int i = 0; i < 8; i++) {
                     int numBytes = 16 + (posCaracter * 8) + i;
                     int fila = numBytes / bytesFila;
                     int col = (numBytes % bytesFila) / 3;
                     int color = (numBytes % bytesFila) % 3;
                     //mensaje[posCaracter] |= (char) ((imagen[fila][col][color] & 1) << i);
-                    writer.write("Imagen[" + str(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"R");
-                    writer.write("Mensaje[" + str(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"W");
+                    writer.write("Imagen[" + String.valueOf(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"R"+ "\n");
+                    ref++;
+                    writer.write("Mensaje[" + String.valueOf(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"W"+ "\n");
+                    ref++;
                     }
                 }
+                
+                writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+
 }
 
 
