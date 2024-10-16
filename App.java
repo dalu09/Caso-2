@@ -70,85 +70,84 @@ public class App {
     }
 
     // Método para generar referencias desde la imagen BMP
-    public static void generarReferencias(Imagen imagen, int tamanoPagina) {
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("referencias.txt"))) {
-            int filas = imagen.getAlto();
-            int columnas = imagen.getAncho();
-            int tamanoMensaje = imagen.leerLongitud();
-            int tamanoImagen = filas * columnas * 3;
-
-            // Calcular el número de referencias necesarias
-            System.out.println("tamano del mensaje: " + tamanoMensaje);
-
-            int num_referencias = 16 + 17 * tamanoMensaje;
-            int paginasVirtuales = (tamanoImagen + tamanoMensaje + tamanoPagina - 1) / tamanoPagina;
-
-            // Escribir datos generales
-            bufferedWriter.write("TP=" + tamanoPagina + "\n");
-            bufferedWriter.write("NF=" + filas + "\n");
-            bufferedWriter.write("NC=" + columnas + "\n");
-            bufferedWriter.write("NR=" + num_referencias + "\n");
-            bufferedWriter.write("NP=" + paginasVirtuales + "\n");
-
-            // Generar referencias para los primeros 16 bits (longitud del mensaje)
-            int columna_matriz = 0;
-            String[] colors = {"R", "G", "B"};
-            int desplazamiento = 0;
-
-            for (int cuenta = 0; cuenta < 16; cuenta++) {
-                String letter_color = colors[cuenta % 3];
-                if (cuenta % 3 == 0 && cuenta != 0) {
-                    columna_matriz++;
-                }
-                bufferedWriter.write("Imagen[0][" + columna_matriz + "]." + letter_color + ",0," + desplazamiento + ",R\n");
-                desplazamiento++;
-            }
-
-            // Generar referencias para el mensaje en la imagen
-            int fila_matriz = 0;
-            int numero_pagina = 0;
-            int pos_mensaje = 0;
-            int numero_pagina_mensaje = (3 * imagen.getAncho() * imagen.getAlto() + tamanoPagina - 1) / tamanoPagina;
+    public static void generarReferencias(Imagen imagen, int tamanoPag) {
+        try (BufferedWriter escritor = new BufferedWriter(new FileWriter("referencias.txt"))) {
+            int filasImg = imagen.getAlto();
+            int colsImg = imagen.getAncho();
+            int longitudMensaje = imagen.leerLongitud();
+            int tamanoBytesImagen = filasImg * colsImg * 3;
+    
+            // Calcular la cantidad de referencias necesarias
+            System.out.println("Tamaño del mensaje: " + longitudMensaje);
+    
+            int totalReferencias = 16 + 17 * longitudMensaje;
+            int numPagsVirtuales = (tamanoBytesImagen + longitudMensaje + tamanoPag - 1) / tamanoPag;
             
-            int cuenta_imagen = 16; // Continuar donde se dejó
-            int letra_mensaje = 0;
-            boolean sigue_mensaje = false;
-
-            for (; cuenta_imagen < num_referencias;) {
-                bufferedWriter.write("Mensaje[" + letra_mensaje + "]," + numero_pagina_mensaje + "," + pos_mensaje + ",W\n");
-                cuenta_imagen++;
-
+            escritor.write("TP=" + tamanoPag + "\n");
+            escritor.write("Filas=" + filasImg + "\n");
+            escritor.write("Columnas=" + colsImg + "\n");
+            escritor.write("Referencias=" + totalReferencias + "\n");
+            escritor.write("PagsVirt=" + numPagsVirtuales + "\n");
+    
+            // Generar referencias para los primeros 16 bits de la longitud del mensaje
+            int columna = 0;
+            String[] colores = {"Rojo", "Verde", "Azul"};
+            int offset = 0;
+    
+            for (int i = 0; i < 16; i++) {
+                String colorActual = colores[i % 3];
+                if (i % 3 == 0 && i != 0) {
+                    columna++;
+                }
+                escritor.write("Imagen[0][" + columna + "]." + colorActual + ",0," + offset + ",R\n");
+                offset++;
+            }
+    
+            // Generar referencias para el contenido del mensaje en la imagen
+            int fila = 0;
+            int numPagina = 0;
+            int posicionMensaje = 0;
+            int pagMensaje = (3 * imagen.getAncho() * imagen.getAlto() + tamanoPag - 1) / tamanoPag;
+            int contadorImg = 16;
+            int indiceMensaje = 0;
+            boolean continuacion = false;
+    
+            for (; contadorImg < totalReferencias;) {
+                escritor.write("Mensaje[" + indiceMensaje + "]," + pagMensaje + "," + posicionMensaje + ",W\n");
+                contadorImg++;
+    
                 for (int i = 0; i < 8; i++) {
-                    String letter_color = colors[cuenta_imagen % 3];
-                    if (cuenta_imagen % 3 == 0) {
-                        columna_matriz++;
-                        if (columna_matriz >= imagen.getAncho()) {
-                            fila_matriz++;
-                            columna_matriz = 0;
+                    String colorRef = colores[contadorImg % 3];
+                    if (contadorImg % 3 == 0) {
+                        columna++;
+                        if (columna >= imagen.getAncho()) {
+                            fila++;
+                            columna = 0;
                         }
                     }
-                    bufferedWriter.write("Imagen[" + fila_matriz + "][" + columna_matriz + "]." + letter_color + "," + numero_pagina + "," + desplazamiento + ",R\n");
-                    desplazamiento++;
-                    if (desplazamiento >= tamanoPagina) {
-                        numero_pagina++;
-                        desplazamiento = 0;
+                    escritor.write("Imagen[" + fila + "][" + columna + "]." + colorRef + "," + numPagina + "," + offset + ",R\n");
+                    offset++;
+                    if (offset >= tamanoPag) {
+                        numPagina++;
+                        offset = 0;
                     }
-                    cuenta_imagen++;
-                    sigue_mensaje = true;
+                    contadorImg++;
+                    continuacion = true;
                 }
-                pos_mensaje++;
-                letra_mensaje++;
-                if (pos_mensaje >= tamanoPagina) {
-                    pos_mensaje = 0;
-                    numero_pagina_mensaje++;
+                posicionMensaje++;
+                indiceMensaje++;
+                if (posicionMensaje >= tamanoPag) {
+                    posicionMensaje = 0;
+                    pagMensaje++;
                 }
             }
-
+    
             System.out.println("Referencias generadas y guardadas en 'referencias.txt'.");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    
         
     
     public static void simularPaginacion(String archivoReferencias, int numMarcos) {
