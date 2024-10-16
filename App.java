@@ -91,7 +91,7 @@ public class App {
     
             // Generar referencias para los primeros 16 bits de la longitud del mensaje
             int columna = 0;
-            String[] colores = {"Rojo", "Verde", "Azul"};
+            String[] colores = {"R", "G", "B"}; 
             int offset = 0;
     
             for (int i = 0; i < 16; i++) {
@@ -102,7 +102,6 @@ public class App {
                 escritor.write("Imagen[0][" + columna + "]." + colorActual + ",0," + offset + ",R\n");
                 offset++;
             }
-    
             // Generar referencias para el contenido del mensaje en la imagen
             int fila = 0;
             int numPagina = 0;
