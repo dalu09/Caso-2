@@ -83,13 +83,12 @@ public class App {
             int totalReferencias = 16 + 17 * longitudMensaje;
             int numPagsVirtuales = (tamanoBytesImagen + longitudMensaje + tamanoPag - 1) / tamanoPag;
             
-            escritor.write("TP=" + tamanoPag + "\n");
-            escritor.write("Filas=" + filasImg + "\n");
-            escritor.write("Columnas=" + colsImg + "\n");
-            escritor.write("Referencias=" + totalReferencias + "\n");
-            escritor.write("PagsVirt=" + numPagsVirtuales + "\n");
+            escritor.write("P=" + tamanoPag + "\n");
+            escritor.write("NF=" + filasImg + "\n");
+            escritor.write("NC=" + colsImg + "\n");
+            escritor.write("NR=" + totalReferencias + "\n");
+            escritor.write("NP=" + numPagsVirtuales + "\n");
     
-            // Generar referencias para los primeros 16 bits de la longitud del mensaje
             int columna = 0;
             String[] colores = {"R", "G", "B"}; 
             int offset = 0;
@@ -102,7 +101,6 @@ public class App {
                 escritor.write("Imagen[0][" + columna + "]." + colorActual + ",0," + offset + ",R\n");
                 offset++;
             }
-            // Generar referencias para el contenido del mensaje en la imagen
             int fila = 0;
             int numPagina = 0;
             int posicionMensaje = 0;
