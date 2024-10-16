@@ -93,6 +93,9 @@ public class Imagen {
     public int getAlto() {
         return this.alto;
     }
+    public byte[][][] getImagen(){
+        return this.imagen;
+    }
 
     public void escribirImagen(String output) {
         try {
