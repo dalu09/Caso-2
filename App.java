@@ -29,7 +29,7 @@ public class App {
                     String archivoImagen = scanner.next();
                     imagenModificada = new Imagen(archivoImagen);
 
-                    recuperarMensajeReferencias(imagenModificada, tamanoPagina);
+                    generarReferencias(imagenModificada, tamanoPagina);
                     break;
 
                 case 2:
@@ -63,7 +63,7 @@ public class App {
                     char[] mensajeOculto = imagenModificada.recuperarMensaje();
                     escribirArchivoTexto("Mensaje_oculto_" + archivo, mensajeOculto);
 
-                    System.out.println("Mensaje_oculto_" + archivo + " se creó con exito");
+                    System.out.println("Mensaje_oculto_" + archivo + " se creó con éxito");
                     break;
             }
         }
@@ -71,43 +71,85 @@ public class App {
 
     // Método para generar referencias desde la imagen BMP
     public static void generarReferencias(Imagen imagen, int tamanoPagina) {
-        try {
-            FileWriter writer = new FileWriter("referencias.txt");
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("referencias.txt"))) {
             int filas = imagen.getAlto();
             int columnas = imagen.getAncho();
             int tamanoMensaje = imagen.leerLongitud();
-    
-            // Calcular número de páginas necesarias
-            int ref = 0;
-            int paginasVirtuales = (((filas*columnas*3)+tamanoMensaje)/tamanoPagina);
-    
-    
-            // Escribir referencias generadas
-            for (int i = 0; i < filas; i++) {
-                for (int j = 0; j < columnas; j++) {
-                    writer.write("Imagen[" + i + "][" + j + "].R," + (i * columnas + j) / tamanoPagina + "," + (i * columnas + j) % tamanoPagina + ",R\n");
-                    writer.write("Imagen[" + i + "][" + j + "].G," + (i * columnas + j) / tamanoPagina + "," + (i * columnas + j) % tamanoPagina + ",R\n");
-                    writer.write("Imagen[" + i + "][" + j + "].B," + (i * columnas + j) / tamanoPagina + "," + (i * columnas + j) % tamanoPagina + ",R\n");
+            int tamanoImagen = filas * columnas * 3;
+
+            // Calcular el número de referencias necesarias
+            System.out.println("tamano del mensaje: " + tamanoMensaje);
+
+            int num_referencias = 16 + 17 * tamanoMensaje;
+            int paginasVirtuales = (tamanoImagen + tamanoMensaje + tamanoPagina - 1) / tamanoPagina;
+
+            // Escribir datos generales
+            bufferedWriter.write("TP=" + tamanoPagina + "\n");
+            bufferedWriter.write("NF=" + filas + "\n");
+            bufferedWriter.write("NC=" + columnas + "\n");
+            bufferedWriter.write("NR=" + num_referencias + "\n");
+            bufferedWriter.write("NP=" + paginasVirtuales + "\n");
+
+            // Generar referencias para los primeros 16 bits (longitud del mensaje)
+            int columna_matriz = 0;
+            String[] colors = {"R", "G", "B"};
+            int desplazamiento = 0;
+
+            for (int cuenta = 0; cuenta < 16; cuenta++) {
+                String letter_color = colors[cuenta % 3];
+                if (cuenta % 3 == 0 && cuenta != 0) {
+                    columna_matriz++;
+                }
+                bufferedWriter.write("Imagen[0][" + columna_matriz + "]." + letter_color + ",0," + desplazamiento + ",R\n");
+                desplazamiento++;
+            }
+
+            // Generar referencias para el mensaje en la imagen
+            int fila_matriz = 0;
+            int numero_pagina = 0;
+            int pos_mensaje = 0;
+            int numero_pagina_mensaje = (3 * imagen.getAncho() * imagen.getAlto() + tamanoPagina - 1) / tamanoPagina;
+            
+            int cuenta_imagen = 16; // Continuar donde se dejó
+            int letra_mensaje = 0;
+            boolean sigue_mensaje = false;
+
+            for (; cuenta_imagen < num_referencias;) {
+                bufferedWriter.write("Mensaje[" + letra_mensaje + "]," + numero_pagina_mensaje + "," + pos_mensaje + ",W\n");
+                cuenta_imagen++;
+
+                for (int i = 0; i < 8; i++) {
+                    String letter_color = colors[cuenta_imagen % 3];
+                    if (cuenta_imagen % 3 == 0) {
+                        columna_matriz++;
+                        if (columna_matriz >= imagen.getAncho()) {
+                            fila_matriz++;
+                            columna_matriz = 0;
+                        }
+                    }
+                    bufferedWriter.write("Imagen[" + fila_matriz + "][" + columna_matriz + "]." + letter_color + "," + numero_pagina + "," + desplazamiento + ",R\n");
+                    desplazamiento++;
+                    if (desplazamiento >= tamanoPagina) {
+                        numero_pagina++;
+                        desplazamiento = 0;
+                    }
+                    cuenta_imagen++;
+                    sigue_mensaje = true;
+                }
+                pos_mensaje++;
+                letra_mensaje++;
+                if (pos_mensaje >= tamanoPagina) {
+                    pos_mensaje = 0;
+                    numero_pagina_mensaje++;
                 }
             }
-    
-            // Referencias para el mensaje
-            for (int k = 0; k < tamanoMensaje; k++) {
-                writer.write("Mensaje[" + k + "]," + ((filas * columnas * 3) + k) / tamanoPagina + "," + ((filas * columnas * 3) + k) % tamanoPagina + ",W\n");
-            }
 
-            writer.write("TP=" + tamanoPagina + "\n");
-            writer.write("NF=" + filas + "\n");
-            writer.write("NC=" + columnas + "\n");
-            writer.write("NR=" + ref + "\n");
-            writer.write("NP=" + paginasVirtuales + "\n");
-
-            writer.close();
             System.out.println("Referencias generadas y guardadas en 'referencias.txt'.");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+        
     
     public static void simularPaginacion(String archivoReferencias, int numMarcos) {
         PageTable pageTable = new PageTable(numMarcos);

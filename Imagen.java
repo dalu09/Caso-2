@@ -24,9 +24,10 @@ public class Imagen {
             for (int i = 0; i < alto; i++) {
                 for (int j = 0; j < ancho; j++) {
                     fis.read(pixel);
-                    imagen[i][j][0] = pixel[2]; 
-                    imagen[i][j][1] = pixel[1]; 
-                    imagen[i][j][2] = pixel[0]; 
+                    imagen[i][j][0] = pixel[0]; // Blue
+                    imagen[i][j][1] = pixel[1]; // Green
+                    imagen[i][j][2] = pixel[2]; // Red
+
                 }
             }
 
@@ -81,7 +82,7 @@ public class Imagen {
         int longitud = 0;
         for (int i = 0; i < 16; i++) {
             int col = (i % (ancho * 3)) / 3;
-            longitud |= (imagen[0][col][(i % 3)] & 1) << i;
+            longitud = longitud | (imagen[0][col][((i % (ancho * 3)) % 3)] & 1) << i;
         }
         return longitud;
     }
