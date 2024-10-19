@@ -29,7 +29,7 @@ public class App {
                     String archivoImagen = scanner.next();
                     imagenModificada = new Imagen(archivoImagen);
 
-                    generarReferencias(imagenModificada, tamanoPagina);
+                    crearReferencias(imagenModificada, tamanoPagina);
                     break;
 
                 case 2:
@@ -49,7 +49,7 @@ public class App {
                     String archivoMensaje = scanner.next();
 
                     char[] mensaje = leerArchivoTexto(archivoMensaje);
-                    imagenModificada.esconderMensaje(mensaje, mensaje.length);
+                    imagenModificada.esconder(mensaje, mensaje.length);
                     imagenModificada.escribirImagen(archivoImg + "_modificado");
 
                     System.out.println("Mensaje escondido");
@@ -58,83 +58,105 @@ public class App {
                 case 4:
                     System.out.print("Ingrese el nombre del archivo BMP con el mensaje escondido: ");
                     String archivo = scanner.next();
+                
+                    // Cargar la imagen con el archivo dado
                     imagenModificada = new Imagen(archivo);
-
-                    char[] mensajeOculto = imagenModificada.recuperarMensaje();
+            
+                    int longitudMensaje = imagenModificada.leerLongitud();
+                    char[] mensajeOculto = new char[longitudMensaje];
+                
+                    // Llama al método recuperar, pasándole el array y la longitud del mensaje
+                    imagenModificada.recuperar(mensajeOculto, longitudMensaje);
+                
+                    // Escribir el archivo con el mensaje oculto recuperado
                     escribirArchivoTexto("Mensaje_oculto_" + archivo, mensajeOculto);
-
+                
                     System.out.println("Mensaje_oculto_" + archivo + " se creó con éxito");
                     break;
             }
         }
     }
 
-    // Método para generar referencias desde la imagen BMP
-    public static void generarReferencias(Imagen imagen, int tamanoPag) {
-        try (BufferedWriter escritor = new BufferedWriter(new FileWriter("referencias.txt"))) {
-            int filasImg = imagen.getAlto();
-            int colsImg = imagen.getAncho();
-            int longitudMensaje = imagen.leerLongitud();
-            int tamanoBytesImagen = filasImg * colsImg * 3;
+    public static void crearReferencias(Imagen img, int tamanoPagina) {
+        try (BufferedWriter output = new BufferedWriter(new FileWriter("referencias.txt"))) {
+            int numFilas = img.alto;
+            int numColumnas = img.ancho;
+            int mensajeLongitud = img.leerLongitud();
+            int totalBytes = numFilas * numColumnas * 3;
     
-            // Calcular la cantidad de referencias necesarias
-            System.out.println("Tamaño del mensaje: " + longitudMensaje);
+            // Cálculo del total de referencias necesarias
+            System.out.println("Longitud del mensaje: " + mensajeLongitud);
     
-            int totalReferencias = 16 + 17 * longitudMensaje;
-            int numPagsVirtuales = (tamanoBytesImagen + longitudMensaje + tamanoPag - 1) / tamanoPag;
-            
-            escritor.write("P=" + tamanoPag + "\n");
-            escritor.write("NF=" + filasImg + "\n");
-            escritor.write("NC=" + colsImg + "\n");
-            escritor.write("NR=" + totalReferencias + "\n");
-            escritor.write("NP=" + numPagsVirtuales + "\n");
+            int refTotal = 16 + 17 * mensajeLongitud;
+            int pagsVirtuales = (totalBytes+ mensajeLongitud + tamanoPagina - 1) / tamanoPagina;
     
-            int columna = 0;
-            String[] colores = {"R", "G", "B"}; 
-            int offset = 0;
+            // Escribimos información inicial
+            output.write("P=" + tamanoPagina + "\n");
+            output.write("NF=" + numFilas + "\n");
+            output.write("NC=" + numColumnas + "\n");
+            output.write("NR=" + refTotal + "\n");
+            output.write("NP=" + pagsVirtuales + "\n");
     
-            for (int i = 0; i < 16; i++) {
-                String colorActual = colores[i % 3];
-                if (i % 3 == 0 && i != 0) {
-                    columna++;
+            int columnaActual = 0;
+            String[] coloresRGB = {"R", "G", "B"};
+            int desplaz = 0;
+    
+            // Escribir las primeras 16 referencias
+            int contador;
+            for (contador = 0; contador < 16; contador++) {
+                String color = coloresRGB[contador % 3];
+                if (contador % 3 == 0 && contador != 0) {
+                    columnaActual++;
                 }
-                escritor.write("Imagen[0][" + columna + "]." + colorActual + ",0," + offset + ",R\n");
-                offset++;
+                output.write("Imagen[0][" + columnaActual + "]." + color + ",0," + desplaz + ",R\n");
+                desplaz++;
             }
-            int fila = 0;
-            int numPagina = 0;
-            int posicionMensaje = 0;
-            int pagMensaje = (3 * imagen.getAncho() * imagen.getAlto() + tamanoPag - 1) / tamanoPag;
-            int contadorImg = 16;
+    
+            int filaActual = 0;
+            int paginaActual = 0;
+            int posEnMensaje = 0;
+            int pagMensaje = (3 * img.ancho * img.alto + tamanoPagina - 1) / tamanoPagina;
+    
+            int contadorImagen = contador;
             int indiceMensaje = 0;
-            boolean continuacion = false;
+            boolean continuar = false;
     
-            for (; contadorImg < totalReferencias;) {
-                escritor.write("Mensaje[" + indiceMensaje + "]," + pagMensaje + "," + posicionMensaje + ",W\n");
-                contadorImg++;
-    
-                for (int i = 0; i < 8; i++) {
-                    String colorRef = colores[contadorImg % 3];
-                    if (contadorImg % 3 == 0) {
-                        columna++;
-                        if (columna >= imagen.getAncho()) {
-                            fila++;
-                            columna = 0;
+            // Escribir referencias del mensaje y colores
+            while (contador < refTotal) {
+                output.write("Mensaje[" + indiceMensaje + "]," + pagMensaje + "," + posEnMensaje + ",W\n");
+                contador++;
+                for (int i = 0; i < 16; i++) {
+                    if (continuar) {
+                        output.write("Mensaje[" + indiceMensaje + "]," + pagMensaje + "," + posEnMensaje + ",W\n");
+                        contador++;
+                        continuar = false;
+                    } else {
+                        String color = coloresRGB[contadorImagen % 3];
+                        if (contadorImagen % 3 == 0) {
+                            columnaActual++;
+                            if (columnaActual >= img.ancho) {
+                                filaActual++;
+                                columnaActual = 0;
+                            }
                         }
+                        output.write("Imagen[" + filaActual + "][" + columnaActual + "]." + color + "," + paginaActual + "," + desplaz + ",R\n");
+    
+                        desplaz++;
+                        if (desplaz >= tamanoPagina) {
+                            paginaActual++;
+                            desplaz = 0;
+                        }
+                        contador++;
+                        contadorImagen++;
+                        continuar = true;
                     }
-                    escritor.write("Imagen[" + fila + "][" + columna + "]." + colorRef + "," + numPagina + "," + offset + ",R\n");
-                    offset++;
-                    if (offset >= tamanoPag) {
-                        numPagina++;
-                        offset = 0;
-                    }
-                    contadorImg++;
-                    continuacion = true;
                 }
-                posicionMensaje++;
+    
+                posEnMensaje++;
                 indiceMensaje++;
-                if (posicionMensaje >= tamanoPag) {
-                    posicionMensaje = 0;
+    
+                if (posEnMensaje >= tamanoPagina) {
+                    posEnMensaje = 0;
                     pagMensaje++;
                 }
             }
@@ -145,7 +167,6 @@ public class App {
         }
     }
     
-        
     
     public static void simularPaginacion(String archivoReferencias, int numMarcos) {
         PageTable pageTable = new PageTable(numMarcos);
@@ -218,8 +239,8 @@ public class App {
     public static void recuperarMensajeReferencias(Imagen imagen, int tamanoPagina) {
         try {
             FileWriter writer = new FileWriter("referencias.txt");
-            int filas = imagen.getAlto();
-            int columnas = imagen.getAncho();
+            int filas = imagen.alto;
+            int columnas = imagen.ancho;
             int tamanoImagen = filas * columnas * 3;
             int tamanoMensaje = imagen.leerLongitud();
             
@@ -238,7 +259,7 @@ public class App {
             int longitud = imagen.leerLongitud(); 
             char[] mensaje = new char[longitud];
 
-            int bytesFila = imagen.getAncho() * 3;
+            int bytesFila = imagen.ancho * 3;
             for (int posCaracter = 0; posCaracter < longitud; posCaracter++) {
                 //mensaje[posCaracter] = 0;
                 writer.write("Mensaje[" + String.valueOf(posCaracter)+"],"+((tamanoImagen + posCaracter)/tamanoPagina)+","+((tamanoImagen + posCaracter)%tamanoPagina)+","+"W"+ "\n");
