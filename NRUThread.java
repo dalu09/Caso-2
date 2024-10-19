@@ -7,14 +7,15 @@ public class NRUThread extends Thread {
 
     public void run() {
         try {
-            while (true) {
-                synchronized(pageTable) {
+            while (!Thread.currentThread().isInterrupted()) { // Solo se interrumpe si lo solicitamos
+                synchronized (pageTable) {
                     pageTable.categorizePages(); // Clasifica las páginas para el algoritmo NRU
                 }
-                Thread.sleep(1); // Ejecutar el algoritmo NRU cada 1 ms
+                Thread.sleep(1);
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+
+            System.out.println("Thread de NRU interrumpido.");
         }
     }
 }

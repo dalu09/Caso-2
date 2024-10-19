@@ -162,6 +162,7 @@ public class App {
             }
     
             System.out.println("Referencias generadas y guardadas en 'referencias.txt'.");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -169,43 +170,40 @@ public class App {
     
     
     public static void simularPaginacion(String archivoReferencias, int numMarcos) {
-        PageTable pageTable = new PageTable(numMarcos);
-        FaultsCounter faultsCounter = new FaultsCounter();
-        
-        // Variables para calcular tiempos
-        long tiempoTotal = 0;
-        long tiempoHits = 25;  // ns
-        long tiempoMisses = 10_000_000;  // 10 ms en ns
+        PageTable pageTable = new PageTable(numMarcos); // Crea la tabla de páginas con marcos limitados
+        FaultsCounter faultsCounter = new FaultsCounter(); // Inicializa el contador de fallos y hits
+        NRUThread nruThread = new NRUThread(pageTable); // Thread para manejar bits de referencia
+        nruThread.start(); // Iniciamos el thread
     
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(archivoReferencias));
+        try (BufferedReader reader = new BufferedReader(new FileReader(archivoReferencias))) {
             String linea;
             while ((linea = reader.readLine()) != null) {
-                // Procesar cada línea del archivo de referencias
                 if (linea.startsWith("Imagen") || linea.startsWith("Mensaje")) {
                     String[] partes = linea.split(",");
                     int paginaVirtual = Integer.parseInt(partes[1]);
     
-                    // Intentamos cargar la página y verificamos si es un hit o un fallo de página
-                    boolean hit = pageTable.loadPage(paginaVirtual);
+                    boolean hit = pageTable.loadPage(paginaVirtual); // Verifica si la página está en la memoria
                     if (hit) {
                         faultsCounter.countHit();
-                        tiempoTotal += tiempoHits;
                     } else {
                         faultsCounter.countFault();
-                        tiempoTotal += tiempoMisses;
                     }
                 }
             }
     
-            reader.close();
             System.out.println("Simulación completada.");
             System.out.println("Total de fallas de página: " + faultsCounter.getFaults());
             System.out.println("Total de hits: " + faultsCounter.getHits());
-            System.out.println("Tiempo total de acceso: " + tiempoTotal + " nanosegundos");
     
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            nruThread.interrupt(); // Detenemos el thread de NRU al final de la simulación
+            try {
+                nruThread.join(); // Esperamos que el thread termine correctamente antes de continuar
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
     

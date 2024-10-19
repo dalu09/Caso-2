@@ -2,9 +2,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PageTable {
-    private HashMap<Integer, Page> pagesTable = new HashMap<>();
-    private ArrayList<Integer> frames = new ArrayList<>();
-    private int maxFrames;
+    private HashMap<Integer, Page> pagesTable = new HashMap<>(); // Páginas virtuales cargadas
+    private ArrayList<Integer> frames = new ArrayList<>(); // Marcos de página disponibles
+    private int maxFrames; // Número de marcos disponibles en RAM
 
     public PageTable(int maxFrames) {
         this.maxFrames = maxFrames;
@@ -12,7 +12,7 @@ public class PageTable {
 
     class Page {
         boolean referenced; 
-        boolean modified;    
+        boolean modified; 
 
         Page() {
             referenced = false;
@@ -30,18 +30,17 @@ public class PageTable {
         } else {
             System.out.println("Falló de página: " + page);
             if (frames.size() < maxFrames) {
-                frames.add(page);
+                frames.add(page); // Agregamos la página a la memoria real
                 pagesTable.put(page, new Page());
             } else {
-                replacePage(page);
+                replacePage(page); // Reemplazamos una página si no hay espacio
             }
             return false;
         }
     }
 
-    // Método sincronizado para reemplazar una página en la memoria usando el algoritmo NRU
     public synchronized void replacePage(int page) {
-        int paginaReemplazar = selectPageToReplace();
+        int paginaReemplazar = selectPageToReplace(); // Seleccionamos la página a reemplazar usando NRU
         System.out.println("Reemplazando página " + paginaReemplazar + " con " + page);
         frames.set(frames.indexOf(paginaReemplazar), page);
         pagesTable.put(page, new Page()); // Reemplazamos la página por una nueva instancia
@@ -52,20 +51,17 @@ public class PageTable {
     public synchronized void categorizePages() {
         for (Integer page : pagesTable.keySet()) {
             Page p = pagesTable.get(page);
-            // Simulamos el envejecimiento reiniciando el bit R
             p.referenced = false; // El bit R se pone en false después de cada ciclo NRU
         }
     }
 
-    // Selecciona la página a reemplazar (algoritmo simplificado de NRU)
     public synchronized int selectPageToReplace() {
         for (Integer page : frames) {
             Page p = pagesTable.get(page);
-            if (!p.referenced) {
+            if (!p.referenced) { // Selecciona la primera página que no ha sido referenciada
                 return page;
             }
         }
-        // Si no encontramos ninguna página con R = 0, reemplazamos la primera
-        return frames.get(0);
+        return frames.get(0); // Si todas las páginas fueron referenciadas, reemplazamos la primera
     }
 }
