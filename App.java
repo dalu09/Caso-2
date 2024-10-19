@@ -173,8 +173,10 @@ public class App {
         PageTable pageTable = new PageTable(numMarcos); // Crea la tabla de páginas con marcos limitados
         FaultsCounter faultsCounter = new FaultsCounter(); // Inicializa el contador de fallos y hits
         NRUThread nruThread = new NRUThread(pageTable); // Thread para manejar bits de referencia
+        UpdaterThread updaterThread = new UpdaterThread(pageTable);
         nruThread.start(); // Iniciamos el thread
-    
+        updaterThread.start();
+
         try (BufferedReader reader = new BufferedReader(new FileReader(archivoReferencias))) {
             String linea;
             while ((linea = reader.readLine()) != null) {
