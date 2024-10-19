@@ -173,9 +173,10 @@ public class App {
         PageTable pageTable = new PageTable(numMarcos); // Crea la tabla de páginas con marcos limitados
         FaultsCounter faultsCounter = new FaultsCounter(); // Inicializa el contador de fallos y hits
         NRUThread nruThread = new NRUThread(pageTable); // Thread para manejar bits de referencia
-        //UpdaterThread updaterThread = new UpdaterThread(pageTable); // Thread para actualizar bits de referencia
+        UpdaterThread updaterThread = new UpdaterThread(pageTable); // Thread para actualizar bits de referencia
+
         nruThread.start(); // Iniciamos el thread
-        //updaterThread.start(); // Iniciamos el thread
+        updaterThread.start(); // Iniciamos el thread
 
     
         try (BufferedReader reader = new BufferedReader(new FileReader(archivoReferencias))) {
@@ -202,8 +203,10 @@ public class App {
             e.printStackTrace();
         } finally {
             nruThread.interrupt(); // Detenemos el thread de NRU al final de la simulación
+            updaterThread.interrupt();
             try {
                 nruThread.join(); // Esperamos que el thread termine correctamente antes de continuar
+                updaterThread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

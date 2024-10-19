@@ -7,12 +7,15 @@ public class UpdaterThread extends Thread {
 
     public void run() {
         try {
-            pageTable.categorizePages();
-            
-            Thread.sleep(2); // Esperar 2 ms antes de cargar la siguiente página
-            
+            while (!Thread.currentThread().isInterrupted()) { // Mantener el hilo corriendo
+                synchronized (pageTable) {
+                    // Aquí podemos actualizar el estado de la tabla de páginas según sea necesario.
+                    pageTable.updateTableState();  // Nueva función para actualizar estados en la tabla de páginas
+                }
+                Thread.sleep(2); // Esperar 2 ms antes de volver a actualizar
+            }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("Thread de Updater interrumpido.");
         }
     }
 }

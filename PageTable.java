@@ -54,6 +54,13 @@ public class PageTable {
             p.referenced = false; // El bit R se pone en false después de cada ciclo NRU
         }
     }
+    public synchronized void updateTableState() {
+        for (Integer page : pagesTable.keySet()) {
+            Page p = pagesTable.get(page);
+            // Actualiza los bits o el estado según las reglas del algoritmo de paginación que estés usando.
+            
+        }
+    }
 
     public synchronized int selectPageToReplace() {
         for (Integer page : frames) {
